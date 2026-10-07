@@ -88,3 +88,10 @@ def predict_transaction_risk(payload: TransactionPayload):
         "decision": decision,
         "latency_ms": f"{latency_ms}ms"
     }
+
+from fastapi.responses import RedirectResponse
+
+# 點擊首頁網址時自動重定向到 /docs 頁面
+@app.get("/")
+def main_root():
+    return RedirectResponse(url="/docs")
