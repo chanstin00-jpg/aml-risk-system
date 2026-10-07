@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # 1. 關係型資料庫
+  postgres:
+    image: postgres:15-alpine
+    container_name: aml_postgres
+    environment:
+      POSTGRES_DB: aml_db
+      POSTGRES_USER: aml_user
+      POSTGRES_PASSWORD: aml_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aml_user -d aml_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. 圖資料庫
+  neo4j:
+    image: neo4j:5-community
+    container_name: aml_neo4j
+    environment:
+      - NEO4J_AUTH=neo4j/aml_password
+      - NEO4J_PLUGINS=["apoc"]
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+
+  # 3. 風控推理 API 服務
+  risk-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aml_risk_api
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: always
+
+volumes:
+  postgres_data:
+  neo4j_data:
